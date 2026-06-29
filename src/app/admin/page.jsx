@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 const PASSWORD = "arvx@75";
 
@@ -9,9 +9,9 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
   const [tab, setTab] = useState("videos");
-  const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
-  const fileRef = useRef(null);
+  const [newTitle, setNewTitle] = useState("");
+  const [newLink, setNewLink] = useState("");
 
   useEffect(() => {
     if (authed) fetch("/api/content").then(r => r.json()).then(setData);
@@ -24,23 +24,22 @@ export default function AdminPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const uploadVideo = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: form });
-    const { src } = await res.json();
-    const newVideo = { id: Date.now(), src, thumb: "", title: file.name.replace(/\.[^.]+$/, "").replace(/-/g, " ") };
-    const updated = { ...data, videos: [...data.videos, newVideo] };
-    await save(updated);
-    setUploading(false);
+  const extractDriveId = (link) => {
+    const match = link.match(/\/d\/([\w-]+)/);
+    return match ? match[1] : link;
+  };
+
+  const addVideo = async () => {
+    if (!newTitle || !newLink) return;
+    const driveId = extractDriveId(newLink);
+    const newVideo = { id: Date.now(), driveId, title: newTitle };
+    await save({ ...data, videos: [...data.videos, newVideo] });
+    setNewTitle("");
+    setNewLink("");
   };
 
   const removeVideo = async (id) => {
-    const updated = { ...data, videos: data.videos.filter(v => v.id !== id) };
-    await save(updated);
+    await save({ ...data, videos: data.videos.filter(v => v.id !== id) });
   };
 
   const moveVideo = async (index, dir) => {
@@ -88,7 +87,6 @@ export default function AdminPage() {
     <div style={{ minHeight: "100vh", background: "black", color: "white", padding: "40px 24px" }}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
-        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "40px" }}>
           <div>
             <p style={{ color: "#a78bfa", fontSize: "13px", marginBottom: "4px" }}>A.rvxStudio</p>
@@ -100,7 +98,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Tabs */}
         <div style={{ display: "flex", gap: "8px", marginBottom: "32px", flexWrap: "wrap" }}>
           {["videos", "hero", "about", "contact"].map(t => (
             <button key={t} onClick={() => setTab(t)} style={tabStyle(t)}>
@@ -112,35 +109,64 @@ export default function AdminPage() {
         {/* Videos Tab */}
         {tab === "videos" && (
           <div>
-            <input ref={fileRef} type="file" accept="video/*" onChange={uploadVideo} style={{ display: "none" }} />
-            <button onClick={() => fileRef.current.click()}
-              style={{ width: "100%", padding: "20px", borderRadius: "16px", border: "2px dashed rgba(124,58,237,0.4)", background: "rgba(124,58,237,0.05)", color: "#a78bfa", fontSize: "16px", cursor: "pointer", marginBottom: "24px" }}>
-              {uploading ? "Uploading..." : "+ Upload Video from Mac or Phone"}
-            </button>
+            {/* Add new video */}
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "24px", marginBottom: "24px" }}>
+              <h2 style={{ color: "#a78bfa", fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "16px" }}>Add New Video</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <input
+                  placeholder="Video title e.g. Brand Promo 2024"
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  style={inputStyle}
+                />
+                <input
+                  placeholder="Google Drive link e.g. https://drive.google.com/file/d/..."
+                  value={newLink}
+                  onChange={e => setNewLink(e.target.value)}
+                  style={inputStyle}
+                />
+                <button onClick={addVideo} style={{
+                  background: "#7c3aed", border: "none", borderRadius: "10px",
+                  padding: "12px", color: "white", fontWeight: 600,
+                  cursor: "pointer", fontSize: "14px"
+                }}>+ Add Video</button>
+              </div>
+              <p style={{ color: "#6b7280", fontSize: "12px", marginTop: "12px" }}>
+                To add a video: upload to Google Drive → right click → Share → Anyone with the link → copy and paste above
+              </p>
+            </div>
+
+            {/* Video list */}
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {data.videos.map((video, index) => (
-                <div key={video.id} style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px 16px" }}>
-                  <video style={{ width: "100px", height: "60px", borderRadius: "8px", objectFit: "cover", background: "#111" }} preload="metadata">
-                    <source src={video.src} type="video/mp4" />
-                  </video>
-                  <div style={{ flex: 1 }}>
-                    <input value={video.title} onChange={e => {
-                      const vids = [...data.videos];
-                      vids[index] = { ...vids[index], title: e.target.value };
-                      setData({ ...data, videos: vids });
-                    }}
-                    onBlur={() => save(data)}
-                    style={{ ...inputStyle, padding: "8px 12px" }} />
-                    <p style={{ color: "#6b7280", fontSize: "12px", margin: "4px 0 0" }}>{video.src}</p>
+                <div key={video.id} style={{ display: "flex", alignItems: "center", gap: "12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "14px 16px" }}>
+                  <div style={{ width: "100px", height: "60px", borderRadius: "8px", overflow: "hidden", background: "#111", flexShrink: 0 }}>
+                    <iframe
+                      src={`https://drive.google.com/file/d/${video.driveId}/preview`}
+                      style={{ width: "100%", height: "100%", border: "none", pointerEvents: "none" }}
+                    />
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <input value={video.title}
+                      onChange={e => {
+                        const vids = [...data.videos];
+                        vids[index] = { ...vids[index], title: e.target.value };
+                        setData({ ...data, videos: vids });
+                      }}
+                      onBlur={() => save(data)}
+                      style={{ ...inputStyle, padding: "8px 12px" }} />
+                    <p style={{ color: "#6b7280", fontSize: "11px", margin: "4px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      drive.google.com/file/d/{video.driveId}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", flexShrink: 0 }}>
                     <button onClick={() => moveVideo(index, -1)} style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "white", padding: "4px 10px", borderRadius: "6px", cursor: "pointer" }}>↑</button>
                     <button onClick={() => moveVideo(index, 1)} style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "white", padding: "4px 10px", borderRadius: "6px", cursor: "pointer" }}>↓</button>
                   </div>
-                  <button onClick={() => removeVideo(video.id)}
-                    style={{ background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171", padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "13px" }}>
-                    Remove
-                  </button>
+                  <button onClick={() => removeVideo(video.id)} style={{
+                    background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171",
+                    padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "13px", flexShrink: 0
+                  }}>Remove</button>
                 </div>
               ))}
             </div>
