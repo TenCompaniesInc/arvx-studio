@@ -1,0 +1,30 @@
+{
+  "hero": {
+    "headline": "A.rvxStudio",
+    "subheadline": "Turning visuals into experiences through motion design, cinematic editing and digital storytelling.",
+    "tag": "Motion Graphics • Video Editing"
+  },
+  "about": {
+    "tag": "About",
+    "heading": "Creating Motion\nThat Captures Attention",
+    "col1": "I'm A.rvxStudio, a freelance video editor and motion graphics artist focused on creating visually striking content for creators, brands and digital products.",
+    "col2": "From short-form content to advanced motion graphics and UI animation, I help ideas become engaging visual experiences."
+  },
+  "contact": {
+    "tag": "Contact",
+    "heading": "Let's Work Together",
+    "subtext": "Available for freelance projects worldwide.",
+    "phone": "+256 778 642 803",
+    "email": "Adrianrave75@gmail.com"
+  },
+  "videos": [
+    { "id": 1, "src": "/hero-reel.mp4", "thumb": "/thumb-1.jpg", "title": "Norman Zizoff Editing Competition" },
+    { "id": 2, "src": "/afro-mobile.mp4", "thumb": "/thumb-2.jpg", "title": "Afro Mobile App" },
+    { "id": 3, "src": "/content-secrets.mp4", "thumb": "/thumb-3.jpg", "title": "Content Creation Secrets" },
+    { "id": 4, "src": "/fear-failure.mp4", "thumb": "/thumb-4.jpg", "title": "Fear of Failure" },
+    { "id": 5, "src": "/force-brain.mp4", "thumb": "/thumb-5.jpg", "title": "Force Your Brain to Change" },
+    { "id": 6, "src": "/build-wealth.mp4", "thumb": "/thumb-6.jpg", "title": "How I Go to Build My Wealth" },
+    { "id": 7, "src": "/improve-time.mp4", "thumb": "/thumb-7.jpg", "title": "How to Improve Your Time" },
+    { "id": 8, "src": "/inspiration.mp4", "thumb": "/thumb-8.jpg", "title": "Inspiration" }
+  ]
+}
